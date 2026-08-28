@@ -1,0 +1,376 @@
+/* ==============================================================================
+   👜 STOREFRONT / CUSTOMER CATALOG STYLES - Sampha Ra (สัมภาระ)
+   ============================================================================== */
+
+.storefront-container {
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+}
+
+/* Luxury Hero Banner */
+.storefront-hero {
+    position: relative;
+    border-radius: var(--radius-lg);
+    background: linear-gradient(135deg, #2B2118 0%, #1A1410 100%);
+    color: #FFF;
+    padding: 4rem 3.5rem;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.hero-bg-pattern {
+    position: absolute;
+    right: -5%;
+    top: -20%;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(184, 115, 51, 0.25) 0%, rgba(0, 0, 0, 0) 70%);
+    pointer-events: none;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+    max-width: 650px;
+}
+
+.hero-subtitle {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: var(--color-gold);
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+}
+
+.hero-title {
+    font-family: var(--font-sans);
+    font-size: 2.8rem;
+    font-weight: 800;
+    line-height: 1.15;
+    margin-bottom: 1rem;
+    color: #FFF;
+}
+
+.hero-description {
+    font-size: 1.05rem;
+    color: #D6D3D1;
+    line-height: 1.6;
+    margin-bottom: 1.75rem;
+}
+
+.hero-badges {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.hero-badge-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-full);
+    font-size: 0.85rem;
+    color: #F5F5F4;
+}
+
+/* Storefront Controls (Search, Category Filter, Sort) */
+.storefront-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    background: var(--color-surface);
+    padding: 1.25rem 1.5rem;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
+}
+
+.storefront-categories {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.storefront-cat-btn {
+    padding: 0.55rem 1.25rem;
+    border-radius: var(--radius-full);
+    border: 1px solid var(--color-border);
+    background: var(--color-bg);
+    color: var(--color-muted);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.storefront-cat-btn:hover {
+    color: var(--color-dark);
+    border-color: var(--color-accent);
+}
+
+.storefront-cat-btn.active {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: #FFF;
+    box-shadow: 0 4px 12px rgba(139, 69, 19, 0.25);
+}
+
+.storefront-filters-right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.storefront-search {
+    width: 240px;
+    padding: 0.55rem 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-full);
+    font-size: 0.875rem;
+    font-family: inherit;
+}
+
+.storefront-sort {
+    padding: 0.55rem 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-full);
+    font-size: 0.875rem;
+    font-family: inherit;
+    background: var(--color-surface);
+    cursor: pointer;
+}
+
+/* Storefront Product Grid */
+.storefront-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 2rem;
+}
+
+.storefront-card {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: all var(--transition-base);
+    box-shadow: var(--shadow-sm);
+    position: relative;
+}
+
+.storefront-card:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--color-accent);
+}
+
+.storefront-card-image-wrap {
+    position: relative;
+    width: 100%;
+    height: 300px;
+    background: #F2EDE6;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.storefront-card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.storefront-card:hover .storefront-card-image {
+    transform: scale(1.06);
+}
+
+.storefront-card-badges {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.storefront-card-quickview {
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    opacity: 0;
+    transition: all var(--transition-base);
+    background: rgba(28, 25, 23, 0.85);
+    backdrop-filter: blur(8px);
+    color: #FFF;
+    border: none;
+    padding: 0.5rem 1.2rem;
+    border-radius: var(--radius-full);
+    font-size: 0.825rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.storefront-card:hover .storefront-card-quickview {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.storefront-card-body {
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.storefront-card-cat {
+    font-size: 0.75rem;
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.storefront-card-title {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--color-dark);
+    margin-bottom: 6px;
+    line-height: 1.35;
+}
+
+.storefront-card-desc {
+    font-size: 0.85rem;
+    color: var(--color-muted);
+    line-height: 1.5;
+    margin-bottom: 1.25rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.storefront-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid var(--color-border);
+}
+
+.storefront-card-price {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: var(--color-primary);
+}
+
+.btn-add-storefront {
+    padding: 0.55rem 1.15rem;
+    border-radius: var(--radius-full);
+    font-size: 0.85rem;
+    font-weight: 700;
+    background: var(--color-primary-light);
+    color: var(--color-primary);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all var(--transition-fast);
+}
+
+.btn-add-storefront:hover {
+    background: var(--color-primary);
+    color: #FFF;
+}
+
+/* Product Detail Modal Specifics */
+.detail-modal-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+.detail-img-container {
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: #F2EDE6;
+    height: 380px;
+}
+
+.detail-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.detail-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.detail-specs-table {
+    margin: 1.25rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    font-size: 0.9rem;
+    background: var(--color-bg);
+    padding: 1rem;
+    border-radius: var(--radius-md);
+}
+
+.detail-spec-row {
+    display: flex;
+    justify-content: space-between;
+}
+
+.detail-spec-label {
+    color: var(--color-muted);
+}
+
+.detail-spec-val {
+    font-weight: 600;
+    color: var(--color-dark);
+}
+
+@media (max-width: 768px) {
+    .storefront-hero {
+        padding: 2.5rem 1.5rem;
+    }
+    .hero-title {
+        font-size: 2rem;
+    }
+    .detail-modal-layout {
+        grid-template-columns: 1fr;
+    }
+    .storefront-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .storefront-filters-right {
+        flex-direction: column;
+    }
+    .storefront-search {
+        width: 100%;
+    }
+}

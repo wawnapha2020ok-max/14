@@ -1,0 +1,162 @@
+/* ==============================================================================
+   🧾 RECEIPT & PRINT STYLES - Sampha Ra (สัมภาระ)
+   ============================================================================== */
+
+.receipt-preview-wrap {
+    display: flex;
+    justify-content: center;
+    padding: 1rem 0;
+}
+
+.receipt-slip {
+    width: 100%;
+    max-width: 360px;
+    background: #FFF;
+    border: 1px solid var(--color-border);
+    padding: 1.5rem 1.25rem;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    font-family: 'Courier New', Courier, monospace, sans-serif;
+    color: #111;
+    line-height: 1.4;
+    font-size: 0.85rem;
+}
+
+.receipt-header {
+    text-align: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px dashed #777;
+}
+
+.receipt-store-title {
+    font-size: 1.25rem;
+    font-weight: 900;
+    margin-bottom: 2px;
+    letter-spacing: 0.5px;
+    font-family: var(--font-sans);
+}
+
+.receipt-store-subtitle {
+    font-size: 0.75rem;
+    color: #444;
+    margin-bottom: 4px;
+}
+
+.receipt-meta {
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px dashed #777;
+    font-size: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.receipt-meta-row {
+    display: flex;
+    justify-content: space-between;
+}
+
+.receipt-items-table {
+    width: 100%;
+    margin-bottom: 0.75rem;
+    border-collapse: collapse;
+}
+
+.receipt-items-table th {
+    text-align: left;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #333;
+    font-size: 0.75rem;
+}
+
+.receipt-items-table th:last-child {
+    text-align: right;
+}
+
+.receipt-items-table td {
+    padding: 4px 0;
+    font-size: 0.8rem;
+    vertical-align: top;
+}
+
+.receipt-items-table td:last-child {
+    text-align: right;
+}
+
+.receipt-totals {
+    border-top: 1px dashed #777;
+    padding-top: 0.5rem;
+    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.receipt-totals-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+}
+
+.receipt-totals-row.grand-total {
+    font-size: 1.05rem;
+    font-weight: 800;
+    border-top: 1px solid #333;
+    border-bottom: 1px solid #333;
+    padding: 6px 0;
+    margin: 4px 0;
+}
+
+.receipt-footer {
+    text-align: center;
+    border-top: 1px dashed #777;
+    padding-top: 0.75rem;
+    font-size: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    color: #444;
+}
+
+.receipt-qr-center {
+    display: flex;
+    justify-content: center;
+    margin: 8px 0;
+}
+
+/* Print Only Styles (Thermal Slip 80mm/58mm) */
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    
+    .receipt-print-area, .receipt-print-area * {
+        visibility: visible;
+    }
+
+    .receipt-print-area {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 80mm;
+        margin: 0;
+        padding: 0;
+        box-shadow: none;
+        border: none;
+    }
+
+    .receipt-slip {
+        border: none;
+        box-shadow: none;
+        width: 100%;
+        max-width: 80mm;
+        padding: 4mm;
+    }
+
+    @page {
+        margin: 0;
+        size: 80mm auto;
+    }
+}

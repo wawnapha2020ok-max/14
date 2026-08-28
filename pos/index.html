@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sampha Ra (สัมภาระ) - POS & Boutique Storefront</title>
+    <meta name="description" content="ระบบ Point of Sale และเว็บหน้าร้านขายกระเป๋าพรีเมียม Sampha Ra (สัมภาระ) เชื่อมต่อฐานข้อมูล Supabase">
+    
+    <!-- Google Fonts: Plus Jakarta Sans & Prompt -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- External Libraries (CDN) -->
+    <!-- Supabase JS Client SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- QRCode.js for PromptPay QR -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+    <!-- Custom CSS Stylesheets -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/pos.css">
+    <link rel="stylesheet" href="css/storefront.css">
+    <link rel="stylesheet" href="css/receipt.css">
+</head>
+<body>
+
+    <!-- 🌟 APP HEADER & NAVIGATION -->
+    <header class="app-header">
+        <div class="brand-container" id="btn-brand-home">
+            <div class="brand-logo-icon">
+                <i data-lucide="shopping-bag"></i>
+            </div>
+            <div class="brand-text">
+                <span class="brand-name">SAMPHA RA</span>
+                <span class="brand-tagline">สัมภาระ • LUXURY & LIFESTYLE BAGS</span>
+            </div>
+        </div>
+
+        <!-- Mode Switcher -->
+        <nav class="nav-modes">
+            <button class="nav-mode-btn active" data-view="pos" id="tab-pos">
+                <i data-lucide="calculator"></i>
+                <span>แคชเชียร์ (POS)</span>
+            </button>
+            <button class="nav-mode-btn" data-view="storefront" id="tab-storefront">
+                <i data-lucide="store"></i>
+                <span>เว็บหน้าร้าน (Storefront)</span>
+            </button>
+            <button class="nav-mode-btn" data-view="inventory" id="tab-inventory">
+                <i data-lucide="boxes"></i>
+                <span>คลังสินค้า (Stock)</span>
+            </button>
+            <button class="nav-mode-btn" data-view="reports" id="tab-reports">
+                <i data-lucide="bar-chart-3"></i>
+                <span>รายงานยอดขาย</span>
+            </button>
+        </nav>
+
+        <!-- Header Actions -->
+        <div class="header-actions">
+            <!-- Supabase Database Connection Modal Trigger -->
+            <button class="btn-icon" id="btn-open-supabase" title="ตั้งค่าการเชื่อมต่อ Supabase Database">
+                <i data-lucide="database"></i>
+                <span class="status-indicator" id="supabase-status-dot" title="สถานะเชื่อมต่อ Supabase"></span>
+            </button>
+
+            <button class="btn-icon" id="btn-toggle-theme" title="สลับโหมดมืด/สว่าง">
+                <i data-lucide="moon"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- ========================================================================= -->
+    <!-- 🛒 VIEW 1: POS CASHIER (หน้าร้านแคชเชียร์) -->
+    <!-- ========================================================================= -->
+    <main class="main-view active" id="view-pos">
+        <div class="pos-container">
+            <!-- Left: Catalog & Product Search -->
+            <section class="pos-catalog-section">
+                <div class="pos-search-bar">
+                    <div class="search-input-wrapper">
+                        <i data-lucide="search" class="search-icon"></i>
+                        <input type="text" id="pos-search-input" class="pos-search-input" placeholder="ค้นหาชื่อกระเป๋า หรือ สแกนรหัส SKU (เช่น BAG-TOT-01)...">
+                    </div>
+                </div>
+
+                <!-- Category Filter Pills -->
+                <div class="pos-categories" id="pos-category-container">
+                    <!-- Populated dynamically via JS -->
+                </div>
+
+                <!-- Product Grid -->
+                <div class="pos-product-grid" id="pos-product-grid">
+                    <!-- Populated dynamically via JS -->
+                </div>
+            </section>
+
+            <!-- Right: POS Cart & Checkout Summary -->
+            <aside class="pos-cart-aside">
+                <div class="cart-header">
+                    <div class="cart-title">
+                        <i data-lucide="shopping-cart"></i>
+                        <span>รายการสั่งซื้อ</span>
+                        <span class="cart-count-badge" id="cart-badge-count">0</span>
+                    </div>
+                    <button class="btn-clear-cart" id="btn-clear-cart" title="ล้างตะกร้า">
+                        <i data-lucide="trash-2"></i>
+                        <span>ล้าง</span>
+                    </button>
+                </div>
+
+                <!-- Customer Details Input (Optional) -->
+                <div style="padding: 0.6rem 1.25rem 0 1.25rem;">
+                    <input type="text" id="pos-customer-name" class="form-input" style="padding: 0.4rem 0.75rem; font-size: 0.825rem;" placeholder="👤 ลูกค้าทั่วไป (Walk-in)">
+                </div>
+
+                <!-- Cart Items List -->
+                <div class="cart-items-list" id="cart-items-list">
+                    <div class="cart-empty-state">
+                        <div class="cart-empty-icon">👜</div>
+                        <p>ยังไม่มีสินค้าในตะกร้า</p>
+                        <small>แตะเลือกกระเป๋าทางซ้ายเพื่อเริ่มขาย</small>
+                    </div>
+                </div>
+
+                <!-- Cart Summary & Checkout Button -->
+                <div class="cart-footer">
+                    <!-- Coupon code input -->
+                    <div class="cart-coupon-row">
+                        <input type="text" id="cart-coupon-input" class="cart-coupon-input" placeholder="ใส่โค้ดส่วนลด (เช่น SAMPHA10, VIP500)">
+                        <button class="cart-coupon-btn" id="btn-apply-coupon">ใช้โค้ด</button>
+                    </div>
+
+                    <div class="cart-summary-lines">
+                        <div class="summary-row">
+                            <span>ยอดรวมสินค้า (Subtotal)</span>
+                            <span id="cart-subtotal">฿0.00</span>
+                        </div>
+                        <div class="summary-row discount-row" id="row-discount" style="display: none;">
+                            <span>ส่วนลด (Discount)</span>
+                            <span id="cart-discount">-฿0.00</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>ภาษีมูลค่าเพิ่ม (VAT 7% รวมในยอด)</span>
+                            <span id="cart-vat">฿0.00</span>
+                        </div>
+                        <div class="summary-row total-row">
+                            <span>ยอดสุทธิ (Total)</span>
+                            <span id="cart-total">฿0.00</span>
+                        </div>
+                    </div>
+
+                    <button class="btn-checkout-pay" id="btn-open-checkout" disabled>
+                        <span>ชำระเงิน</span>
+                        <span id="btn-checkout-amount">฿0.00</span>
+                    </button>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <!-- ========================================================================= -->
+    <!-- 👜 VIEW 2: STOREFRONT (เว็บหน้าร้านแคตตาล็อกสำหรับลูกค้า) -->
+    <!-- ========================================================================= -->
+    <section class="main-view" id="view-storefront">
+        <div class="storefront-container">
+            <!-- Hero Banner -->
+            <div class="storefront-hero">
+                <div class="hero-bg-pattern"></div>
+                <div class="hero-content">
+                    <div class="hero-subtitle">NEW COLLECTION 2026</div>
+                    <h1 class="hero-title">Timeless Luxury & Handcrafted Bags</h1>
+                    <p class="hero-description">
+                        สัมผัสศิลปะแห่งการดีไซน์กระเป๋าที่ผสานความเรียบหรูเหนือกาลเวลาและฟังก์ชันการใช้งานอย่างลงตัว คัดสรรวัสดุหนังแท้และผ้าแคนวาสเกรดพรีเมียม ตอบโจทย์ทุกไลฟ์สไตล์
+                    </p>
+                    <div class="hero-badges">
+                        <div class="hero-badge-item">
+                            <i data-lucide="shield-check"></i>
+                            <span>หนังแท้เกรดพรีเมียม 100%</span>
+                        </div>
+                        <div class="hero-badge-item">
+                            <i data-lucide="truck"></i>
+                            <span>จัดส่งฟรีทั่วประเทศ</span>
+                        </div>
+                        <div class="hero-badge-item">
+                            <i data-lucide="refresh-cw"></i>
+                            <span>รับประกันสินค้า 1 ปี</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Storefront Toolbar -->
+            <div class="storefront-toolbar">
+                <div class="storefront-categories" id="storefront-categories">
+                    <!-- Populated via JS -->
+                </div>
+
+                <div class="storefront-filters-right">
+                    <input type="text" id="storefront-search" class="storefront-search" placeholder="ค้นหากระเป๋า...">
+                    <select id="storefront-sort" class="storefront-sort">
+                        <option value="featured">คอลเลกชันแนะนำ</option>
+                        <option value="price-asc">ราคา: ต่ำ - สูง</option>
+                        <option value="price-desc">ราคา: สูง - ต่ำ</option>
+                        <option value="name">ชื่อสินค้า A-Z</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Storefront Product Grid -->
+            <div class="storefront-grid" id="storefront-grid">
+                <!-- Populated via JS -->
+            </div>
+        </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- 📦 VIEW 3: INVENTORY MANAGEMENT (จัดการสินค้าและสต็อก) -->
+    <!-- ========================================================================= -->
+    <section class="main-view" id="view-inventory">
+        <div style="max-width: 1320px; margin: 0 auto; padding: 2rem 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                    <h2 style="font-size: 1.6rem; font-weight: 800;">คลังสินค้าและจัดการสต็อก</h2>
+                    <p style="color: var(--color-muted); font-size: 0.9rem;">เพิ่ม แก้ไข ปรับสต็อกกระเป๋าทั้งหมด และซิงค์กับ Supabase</p>
+                </div>
+                <button class="btn btn-primary" id="btn-add-new-product">
+                    <i data-lucide="plus"></i>
+                    <span>เพิ่มกระเป๋าใหม่</span>
+                </button>
+            </div>
+
+            <div style="background: var(--color-surface); border-radius: var(--radius-lg); border: 1px solid var(--color-border); overflow: hidden; box-shadow: var(--shadow-sm);">
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+                        <thead>
+                            <tr style="background: var(--color-bg); border-bottom: 1px solid var(--color-border); color: var(--color-muted); font-weight: 600;">
+                                <th style="padding: 1rem;">รูปภาพ</th>
+                                <th style="padding: 1rem;">รหัส SKU</th>
+                                <th style="padding: 1rem;">ชื่อสินค้า</th>
+                                <th style="padding: 1rem;">หมวดหมู่</th>
+                                <th style="padding: 1rem;">ราคาขาย</th>
+                                <th style="padding: 1rem;">สต็อกคงเหลือ</th>
+                                <th style="padding: 1rem; text-align: right;">การจัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventory-table-body">
+                            <!-- Populated via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- 📊 VIEW 4: REPORTS & ORDERS (รายงานยอดขาย) -->
+    <!-- ========================================================================= -->
+    <section class="main-view" id="view-reports">
+        <div style="max-width: 1320px; margin: 0 auto; padding: 2rem 1.5rem; display: flex; flex-direction: column; gap: 2rem;">
+            <div>
+                <h2 style="font-size: 1.6rem; font-weight: 800;">รายงานสรุปยอดขาย (Sales Dashboard)</h2>
+                <p style="color: var(--color-muted); font-size: 0.9rem;">ภาพรวมยอดขายประจำวันและประวัติการทำรายการ</p>
+            </div>
+
+            <!-- Stats KPI Cards -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem;">
+                <div style="background: var(--color-surface); padding: 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--color-border); box-shadow: var(--shadow-sm);">
+                    <div style="font-size: 0.85rem; color: var(--color-muted); font-weight: 600; margin-bottom: 6px;">ยอดขายวันนี้ (Today Revenue)</div>
+                    <div style="font-size: 1.8rem; font-weight: 800; color: var(--color-primary);" id="report-today-sales">฿0.00</div>
+                </div>
+                <div style="background: var(--color-surface); padding: 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--color-border); box-shadow: var(--shadow-sm);">
+                    <div style="font-size: 0.85rem; color: var(--color-muted); font-weight: 600; margin-bottom: 6px;">จำนวนบิลวันนี้ (Orders)</div>
+                    <div style="font-size: 1.8rem; font-weight: 800; color: var(--color-dark);" id="report-today-orders">0 บิล</div>
+                </div>
+                <div style="background: var(--color-surface); padding: 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--color-border); box-shadow: var(--shadow-sm);">
+                    <div style="font-size: 0.85rem; color: var(--color-muted); font-weight: 600; margin-bottom: 6px;">ยอดเฉลี่ยต่อบิล (Avg Ticket)</div>
+                    <div style="font-size: 1.8rem; font-weight: 800; color: var(--color-accent);" id="report-avg-ticket">฿0.00</div>
+                </div>
+            </div>
+
+            <!-- Payment Breakdown & Orders Table -->
+            <div style="display: grid; grid-template-columns: 320px 1fr; gap: 1.5rem;">
+                <!-- Payment Methods Breakdown -->
+                <div style="background: var(--color-surface); padding: 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--color-border);">
+                    <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem;">ช่องทางชำระเงิน</h3>
+                    <div style="display: flex; flex-direction: column; gap: 1rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="display: flex; align-items: center; gap: 6px;"><i data-lucide="qr-code"></i> PromptPay</span>
+                            <span style="font-weight: 700;" id="report-pay-promptpay">฿0.00</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="display: flex; align-items: center; gap: 6px;"><i data-lucide="banknote"></i> เงินสด (Cash)</span>
+                            <span style="font-weight: 700;" id="report-pay-cash">฿0.00</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="display: flex; align-items: center; gap: 6px;"><i data-lucide="credit-card"></i> บัตรเครดิต</span>
+                            <span style="font-weight: 700;" id="report-pay-card">฿0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Orders History Table -->
+                <div style="background: var(--color-surface); border-radius: var(--radius-lg); border: 1px solid var(--color-border); overflow: hidden;">
+                    <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--color-border); font-weight: 700; font-size: 1.1rem;">
+                        ประวัติรายการสั่งซื้อล่าสุด
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
+                            <thead>
+                                <tr style="background: var(--color-bg); border-bottom: 1px solid var(--color-border); color: var(--color-muted);">
+                                    <th style="padding: 0.75rem 1rem; text-align: left;">เลขที่บิล</th>
+                                    <th style="padding: 0.75rem 1rem; text-align: left;">เวลา</th>
+                                    <th style="padding: 0.75rem 1rem; text-align: left;">ลูกค้า</th>
+                                    <th style="padding: 0.75rem 1rem; text-align: left;">วิธีชำระ</th>
+                                    <th style="padding: 0.75rem 1rem; text-align: right;">ยอดรวม</th>
+                                    <th style="padding: 0.75rem 1rem; text-align: center;">สลิป</th>
+                                </tr>
+                            </thead>
+                            <tbody id="orders-history-tbody">
+                                <!-- Populated via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- 💳 MODAL: PAYMENT CHECKOUT (หน้าต่างชำระเงิน) -->
+    <!-- ========================================================================= -->
+    <div class="modal-backdrop" id="modal-payment">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <i data-lucide="credit-card"></i>
+                    <span>ชำระเงิน (Checkout)</span>
+                </div>
+                <button class="modal-close" id="btn-close-payment">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Total Amount Banner -->
+                <div style="text-align: center; margin-bottom: 1.25rem; padding: 1rem; background: var(--color-primary-light); border-radius: var(--radius-md);">
+                    <div style="font-size: 0.85rem; color: var(--color-primary); font-weight: 600;">ยอดชำระสุทธิ</div>
+                    <div style="font-size: 2.2rem; font-weight: 900; color: var(--color-primary);" id="pay-modal-total">฿0.00</div>
+                </div>
+
+                <!-- Payment Method Tabs -->
+                <div class="payment-tabs">
+                    <button class="pay-tab-btn active" data-method="promptpay" id="tab-pay-promptpay">
+                        <i data-lucide="qr-code"></i>
+                        <span>PromptPay QR</span>
+                    </button>
+                    <button class="pay-tab-btn" data-method="cash" id="tab-pay-cash">
+                        <i data-lucide="banknote"></i>
+                        <span>เงินสด (Cash)</span>
+                    </button>
+                    <button class="pay-tab-btn" data-method="card" id="tab-pay-card">
+                        <i data-lucide="credit-card"></i>
+                        <span>บัตรเครดิต</span>
+                    </button>
+                </div>
+
+                <!-- Tab 1: PromptPay Content -->
+                <div class="pay-tab-content" id="pay-content-promptpay">
+                    <div class="promptpay-box">
+                        <div class="promptpay-logo">PromptPay พร้อมเพย์</div>
+                        <div style="font-size: 0.825rem; color: var(--color-muted);">สแกน QR เพื่อชำระเงินผ่าน Mobile Banking ทุกธนาคาร</div>
+                        <div class="qr-code-canvas" id="promptpay-qr-canvas"></div>
+                        <div style="background: #F0F4F8; padding: 8px 16px; border-radius: 8px; width: 100%; border: 1px dashed #CBD5E1;">
+                            <div style="font-size: 0.85rem; font-weight: 700; color: #003D79;">
+                                บัญชี: ร้าน Sampha Ra (สัมภาระ)
+                            </div>
+                            <div style="font-size: 0.8rem; color: var(--color-muted);">
+                                เบอร์พร้อมเพย์: 089-123-4567 • ยอดโอนตรงบิลอัตโนมัติ
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Cash Content -->
+                <div class="pay-tab-content" id="pay-content-cash" style="display: none;">
+                    <div class="cash-payment-box">
+                        <div class="form-group">
+                            <label class="form-label">รับเงินสดมา (บาท)</label>
+                            <input type="number" id="cash-received-input" class="form-input" style="font-size: 1.4rem; font-weight: 700; text-align: right;" placeholder="0.00">
+                        </div>
+
+                        <div class="quick-cash-buttons">
+                            <button class="btn-quick-cash" data-cash="exact">ยอดพอดี</button>
+                            <button class="btn-quick-cash" data-cash="100">+฿100</button>
+                            <button class="btn-quick-cash" data-cash="500">+฿500</button>
+                            <button class="btn-quick-cash" data-cash="1000">+฿1,000</button>
+                        </div>
+
+                        <div class="change-display-card">
+                            <span style="font-weight: 600;">เงินทอน (Change):</span>
+                            <span class="change-amount-text" id="change-display-amount">฿0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 3: Card Content -->
+                <div class="pay-tab-content" id="pay-content-card" style="display: none;">
+                    <div style="text-align: center; padding: 1.5rem; background: var(--color-bg); border-radius: var(--radius-md);">
+                        <i data-lucide="credit-card" style="width: 48px; height: 48px; color: var(--color-primary); margin-bottom: 0.5rem;"></i>
+                        <h4 style="font-weight: 700; margin-bottom: 4px;">แตะ/เสียบบัตรที่เครื่องรูด EDC</h4>
+                        <p style="font-size: 0.85rem; color: var(--color-muted);">รองรับ VISA, Mastercard, JCB, UnionPay</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="btn-cancel-payment">ยกเลิก</button>
+                <button class="btn btn-primary" id="btn-confirm-payment">
+                    <i data-lucide="check-circle-2"></i>
+                    <span>ยืนยันการรับเงิน</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- 🧾 MODAL: RECEIPT PREVIEW & PRINT (ใบเสร็จรับเงิน) -->
+    <!-- ========================================================================= -->
+    <div class="modal-backdrop" id="modal-receipt">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <i data-lucide="receipt"></i>
+                    <span>ใบเสร็จรับเงิน (Receipt)</span>
+                </div>
+                <button class="modal-close" id="btn-close-receipt">&times;</button>
+            </div>
+            <div class="modal-body receipt-print-area">
+                <div class="receipt-preview-wrap">
+                    <div class="receipt-slip" id="receipt-slip-content">
+                        <!-- Receipt template rendered via JS -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="btn-done-receipt">เสร็จสิ้น</button>
+                <button class="btn btn-primary" id="btn-print-receipt">
+                    <i data-lucide="printer"></i>
+                    <span>พิมพ์ใบเสร็จ (Print)</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- ⚡ MODAL: SUPABASE DATABASE CONFIGURATION -->
+    <!-- ========================================================================= -->
+    <div class="modal-backdrop" id="modal-supabase">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <i data-lucide="database"></i>
+                    <span>ตั้งค่าเชื่อมต่อฐานข้อมูล Supabase</span>
+                </div>
+                <button class="modal-close" id="btn-close-supabase">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: 1.25rem; background: var(--color-primary-light); padding: 0.85rem 1rem; border-radius: var(--radius-md); font-size: 0.85rem; line-height: 1.5; color: var(--color-primary-dark);">
+                    💡 <strong>คำแนะนำ:</strong> สามารถคัดลอก <strong>Project URL</strong> และ <strong>anon public key</strong> จาก Supabase Dashboard (Settings &gt; API) มาวางได้เลย
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Supabase Project URL</label>
+                    <input type="text" id="supabase-url-input" class="form-input" placeholder="https://xxxxxxxx.supabase.co">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Supabase Anon Public API Key</label>
+                    <textarea id="supabase-key-input" class="form-textarea" rows="3" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."></textarea>
+                </div>
+
+                <div style="display: flex; gap: 0.75rem; margin-top: 1rem;">
+                    <button class="btn btn-outline" id="btn-test-supabase" style="flex: 1;">
+                        <i data-lucide="activity"></i>
+                        <span>ทดสอบเชื่อมต่อ</span>
+                    </button>
+                    <button class="btn btn-primary" id="btn-save-supabase" style="flex: 1;">
+                        <i data-lucide="save"></i>
+                        <span>บันทึกการตั้งค่า</span>
+                    </button>
+                </div>
+
+                <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid var(--color-border);">
+
+                <div>
+                    <h4 style="font-weight: 700; margin-bottom: 0.5rem;">นำเข้าข้อมูลสินค้าเริ่มต้น (Seed Data)</h4>
+                    <p style="font-size: 0.85rem; color: var(--color-muted); margin-bottom: 0.75rem;">
+                        กดปุ่มนี้เพื่อส่งข้อมูลกระเป๋าแฟชั่น 50 แบบของ Sampha Ra เข้าสู่ตาราง <code>products</code> ใน Supabase อัตโนมัติ
+                    </p>
+                    <button class="btn btn-secondary" id="btn-seed-supabase" style="width: 100%;">
+                        <i data-lucide="upload-cloud"></i>
+                        <span>นำเข้าสินค้า 50 รายการเข้า Supabase</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- 👜 MODAL: PRODUCT DETAIL (หน้ารายละเอียดกระเป๋า) -->
+    <!-- ========================================================================= -->
+    <div class="modal-backdrop" id="modal-product-detail">
+        <div class="modal-card modal-lg">
+            <div class="modal-header">
+                <div class="modal-title" id="detail-modal-title">รายละเอียดสินค้า</div>
+                <button class="modal-close" id="btn-close-detail">&times;</button>
+            </div>
+            <div class="modal-body" id="detail-modal-body">
+                <!-- Rendered dynamically via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- ✏️ MODAL: ADD / EDIT PRODUCT FORM (พร้อมระบบอัปโหลดรูปภาพจริง) -->
+    <!-- ========================================================================= -->
+    <div class="modal-backdrop" id="modal-product-form">
+        <div class="modal-card modal-lg">
+            <div class="modal-header">
+                <div class="modal-title" id="product-form-title">
+                    <i data-lucide="plus-circle"></i>
+                    <span>เพิ่มสินค้ากระเป๋าใหม่</span>
+                </div>
+                <button class="modal-close" id="btn-close-product-form">&times;</button>
+            </div>
+            <form id="product-form">
+                <div class="modal-body">
+                    <!-- Image Upload & Preview Section -->
+                    <div style="background: var(--color-bg); padding: 1.25rem; border-radius: var(--radius-md); border: 1px dashed var(--color-border); margin-bottom: 1.25rem;">
+                        <label class="form-label" style="font-size: 0.95rem; font-weight: 700; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 6px;">
+                            <i data-lucide="image"></i>
+                            <span>รูปภาพกระเป๋า (เลือกไฟล์จากคอมพิวเตอร์ หรือ ใส่ลิงก์ URL) *</span>
+                        </label>
+                        
+                        <div style="display: grid; grid-template-columns: 140px 1fr; gap: 1.25rem; align-items: center;">
+                            <!-- Live Preview Box -->
+                            <div style="width: 140px; height: 140px; border-radius: var(--radius-md); border: 2px solid var(--color-border); overflow: hidden; background: #FFF; display: flex; align-items: center; justify-content: center; position: relative;">
+                                <img id="prod-form-preview-img" src="https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=800&q=80" alt="ตัวอย่างรูปภาพ" style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+
+                            <!-- Upload Inputs -->
+                            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                                <!-- File Upload Button -->
+                                <div>
+                                    <label for="prod-form-file" class="btn btn-secondary" style="cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 0.5rem 1rem; font-size: 0.85rem;">
+                                        <i data-lucide="upload"></i>
+                                        <span>📁 เลือกไฟล์รูปภาพจากเครื่องคอมพิวเตอร์</span>
+                                    </label>
+                                    <input type="file" id="prod-form-file" accept="image/*" style="display: none;">
+                                    <span id="prod-form-file-name" style="font-size: 0.8rem; color: var(--color-muted); margin-left: 8px;"></span>
+                                </div>
+
+                                <!-- Or URL Input -->
+                                <div>
+                                    <div style="font-size: 0.8rem; color: var(--color-muted); margin-bottom: 3px;">หรือ วางลิงก์ URL รูปภาพโดยตรง:</div>
+                                    <input type="text" id="prod-form-image" class="form-input" required placeholder="https://images.unsplash.com/photo-...">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">ชื่อสินค้า (ภาษาไทย) *</label>
+                            <input type="text" id="prod-form-name-th" class="form-input" required placeholder="เช่น กระเป๋าโท้ทหนังแท้คลาสสิก">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">ชื่อสินค้า (English) *</label>
+                            <input type="text" id="prod-form-name" class="form-input" required placeholder="e.g. Sampha Ra Classic Leather Tote">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">รหัส SKU *</label>
+                            <input type="text" id="prod-form-sku" class="form-input" required placeholder="BAG-TOT-01">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">หมวดหมู่สินค้า *</label>
+                            <select id="prod-form-category" class="form-select" required>
+                                <option value="tote">Tote Bags (กระเป๋าโท้ท)</option>
+                                <option value="crossbody">Crossbody (กระเป๋าสะพายข้าง)</option>
+                                <option value="shoulder">Shoulder Bags (กระเป๋าสะพายไหล่)</option>
+                                <option value="backpack">Backpacks (เป้สะพายหลัง)</option>
+                                <option value="travel">Travel Bags (กระเป๋าเดินทาง)</option>
+                                <option value="mini">Mini & Wallets (กระเป๋าสตางค์และมินิ)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">ราคาขาย (บาท) *</label>
+                            <input type="number" id="prod-form-price" class="form-input" required min="0" step="1" placeholder="3890">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">ราคาทุน (บาท)</label>
+                            <input type="number" id="prod-form-cost" class="form-input" min="0" step="1" placeholder="1950">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">จำนวนสต็อก (ชิ้น) *</label>
+                            <input type="number" id="prod-form-stock" class="form-input" required min="0" placeholder="15">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">ป้ายกำกับ (Badge)</label>
+                            <select id="prod-form-badge" class="form-select">
+                                <option value="">ไม่มี</option>
+                                <option value="NEW">NEW (สินค้าใหม่)</option>
+                                <option value="BESTSELLER">BESTSELLER (ขายดี)</option>
+                                <option value="HOT">HOT (สินค้ายอดฮิต)</option>
+                                <option value="LIMITED">LIMITED (รุ่นพิเศษ)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">วัสดุ (Material)</label>
+                            <input type="text" id="prod-form-material" class="form-input" placeholder="หนังวัวแท้ Grain Leather">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">ขนาดกระเป๋า (Dimensions)</label>
+                            <input type="text" id="prod-form-dimensions" class="form-input" placeholder="36 x 28 x 14 cm">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">รายละเอียดสินค้า (Description)</label>
+                        <textarea id="prod-form-desc" class="form-textarea" rows="3" placeholder="อธิบายจุดเด่นของกระเป๋า..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="btn-cancel-product-form">ยกเลิก</button>
+                    <button type="submit" class="btn btn-primary" id="btn-save-product-submit">
+                        <i data-lucide="check"></i>
+                        <span>บันทึกสินค้า</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main JavaScript App Entry (Standalone Bundle - Works on both file:// and http://) -->
+    <script src="js/bundle.js?v=2.0"></script>
+</body>
+</html>
